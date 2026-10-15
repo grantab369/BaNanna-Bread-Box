@@ -102,8 +102,8 @@
       padding: 12px 14px;
       margin-bottom: 20px;
       display: grid;
-      grid-template-columns: 2fr 1fr auto;
-      gap: 12px;
+      grid-template-columns: 2fr 1fr auto auto;
+      gap: 10px;
       align-items: center;
     }
 
@@ -129,6 +129,28 @@
       border-radius: 5px;
       background: var(--card-bg);
     }
+
+    .clear-btn-container {
+      display: flex;
+      align-items: flex-end;
+      height: 100%;
+      padding-bottom: 1px;
+    }
+
+    .btn-clear {
+      background: #D8CCBE;
+      border: 2px solid #8C7B6B;
+      color: var(--wood-dark);
+      font-family: 'Courier Prime', monospace;
+      font-weight: bold;
+      font-size: 0.82rem;
+      padding: 9px 12px;
+      border-radius: 5px;
+      cursor: pointer;
+      width: 100%;
+      text-align: center;
+    }
+    .btn-clear:hover { background: #C8BAAB; }
 
     .card-grid {
       display: grid;
@@ -194,11 +216,31 @@
       display: inline-block;
     }
 
+    /* Dual Rating Box */
+    .ratings-box {
+      background: #F4EBDC;
+      border: 1px solid #D8C8B8;
+      border-radius: 4px;
+      padding: 6px 10px;
+      font-size: 0.76rem;
+      text-align: right;
+    }
+
+    .rating-row {
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 2px;
+    }
+
+    .rating-label { font-weight: bold; color: var(--wood-dark); }
+
     .stars {
       display: inline-flex;
-      gap: 2px;
+      gap: 1px;
       cursor: pointer;
-      font-size: 1.2rem;
+      font-size: 1rem;
       color: #D0C5B8;
       user-select: none;
     }
@@ -314,14 +356,26 @@
       color: var(--ink-muted);
     }
 
-    .delete-btn {
+    .card-footer-actions {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .action-link {
       background: none;
       border: none;
-      color: #B57C70;
+      color: var(--wood-dark);
       cursor: pointer;
       font-family: 'Courier Prime', monospace;
       font-size: 0.74rem;
       text-decoration: underline;
+      font-weight: bold;
+    }
+
+    .delete-btn {
+      color: #B57C70;
+      font-weight: normal;
     }
 
     .modal-overlay {
@@ -388,8 +442,8 @@
 
   <section class="filter-bar">
     <div class="input-group">
-      <label>Search Ingredients (comma-separated) or Recipe Name</label>
-      <input type="text" id="searchInput" placeholder="e.g., lentils, banana, butter, walnuts..." oninput="renderCards()">
+      <label>Search Ingredients, Recipe Name, or Baker</label>
+      <input type="text" id="searchInput" placeholder="e.g., banana, butter, Nana Juju..." oninput="renderCards()">
     </div>
     <div class="input-group">
       <label>Recipe Box Divider (Type)</label>
@@ -411,6 +465,9 @@
         <option value="ANY">Has ANY listed (OR)</option>
       </select>
     </div>
+    <div class="clear-btn-container">
+      <button class="btn-clear" onclick="clearSearchFilters()">✕ Clear Search</button>
+    </div>
   </section>
 
   <main class="card-grid" id="cardGrid"></main>
@@ -420,7 +477,7 @@
     <div class="modal-card">
       <h2>Clip Recipe from Website</h2>
       <p style="font-size:0.84rem; margin-bottom:12px;">
-        Paste a recipe link in Box A, OR copy & paste the recipe text directly into Box B!
+        Paste a recipe link in Box A, OR copy & paste recipe text directly into Box B!
       </p>
       <div class="form-row">
         <label>Option A: Recipe Website Link (URL)</label>
@@ -428,7 +485,11 @@
       </div>
       <div class="form-row">
         <label>Option B: Or Paste Copied Recipe Text Directly (Always Works!)</label>
-        <textarea id="importRawTextInput" rows="5" placeholder="Copy the recipe title, ingredients, and directions from any webpage or note and paste them right here!"></textarea>
+        <textarea id="importRawTextInput" rows="4" placeholder="Copy the recipe title, ingredients, and directions from any webpage and paste them right here!"></textarea>
+      </div>
+      <div class="form-row">
+        <label>Baker / Author (Optional)</label>
+        <input type="text" id="importAuthorInput" placeholder="e.g., Nana Juju, Grantson, Chef John">
       </div>
       <div id="importStatus" style="font-size:0.85rem; color:var(--red-line); margin-bottom:10px; font-weight:bold;"></div>
       <div style="display:flex; justify-content:flex-end; gap:8px;">
@@ -438,10 +499,11 @@
     </div>
   </div>
 
-  <!-- 2. WRITE YOUR OWN RECIPE MODAL -->
+  <!-- 2. WRITE / EDIT RECIPE MODAL -->
   <div class="modal-overlay" id="createModal">
     <div class="modal-card">
-      <h2>Write a New Index Card</h2>
+      <h2 id="modalHeaderTitle">Write a New Index Card</h2>
+      <input type="hidden" id="editCardId">
       <div class="form-row">
         <label>Recipe Title</label>
         <input type="text" id="newTitle" placeholder="Nana's Brown Butter Banana Bread">
@@ -463,6 +525,10 @@
           <label>Prep / Cook Time</label>
           <input type="text" id="newTime" placeholder="10m prep • 55m bake">
         </div>
+      </div>
+      <div class="form-row">
+        <label>Baker / Author</label>
+        <input type="text" id="newAuthor" placeholder="e.g., Nana Juju or Grantson">
       </div>
       <div class="form-row">
         <label>Ingredients (One per line)</label>
@@ -511,8 +577,9 @@
         title: "Slow Cooker Mediterranean Lentil Soup",
         type: "Soups & Stews",
         time: "20m prep • 6-8h slow cook",
-        rating: 5,
-        source: "foodnetwork.com (Jeff Mauro)",
+        author: "Grantson",
+        ratings: { nana: 5, grantson: 5 },
+        source: "foodnetwork.com",
         ingredients: [
           "1 lb dried brown or green lentils, rinsed",
           "6 cups chicken or vegetable stock",
@@ -541,7 +608,8 @@
         title: "Nana's Classic BaNanna Bread",
         type: "Bread & Loaves",
         time: "10m prep • 55m bake • 350°F",
-        rating: 5,
+        author: "Nana Juju",
+        ratings: { nana: 5, grantson: 4 },
         source: "Family Heirloom Card",
         ingredients: [
           "3 ripe bananas, mashed",
@@ -567,7 +635,8 @@
         title: "Cast-Iron Pan-Seared NY Strip",
         type: "Mains & Meats",
         time: "5m prep • 10m cook • High Heat",
-        rating: 5,
+        author: "Grantson",
+        ratings: { nana: 4, grantson: 5 },
         source: "Kitchen Tested",
         ingredients: [
           "1 lb NY Strip steak (1.5\" thick)",
@@ -584,37 +653,17 @@
           { short: "3. Butter-baste with aromatics", full: "Turn heat to low. Toss in butter, smashed garlic, and thyme. Tilt pan and spoon foaming butter continuously over the steak for 90 seconds." },
           { short: "4. Pull at 130°F & rest 8m", full: "Remove steak when internal temp hits 130°F for medium-rare. Rest on a warm board for 8 minutes before slicing against the grain." }
         ]
-      },
-      {
-        id: 103,
-        title: "Cinnamon Sourdough Discard Pancakes",
-        type: "Breakfast",
-        time: "10m prep • 12m cook",
-        rating: 5,
-        source: "Handwritten Card",
-        ingredients: [
-          "1 cup sourdough discard",
-          "1 cup buttermilk",
-          "1 large egg",
-          "2 tbsp melted butter",
-          "1 cup all-purpose flour",
-          "2 tbsp sugar",
-          "1 tsp baking soda",
-          "1/2 tsp cinnamon",
-          "1/2 tsp salt"
-        ],
-        steps: [
-          { short: "1. Whisk starter, milk & egg", full: "Whisk sourdough discard, buttermilk, egg, and melted butter together in a spouted batter bowl." },
-          { short: "2. Sift dry & fold gently", full: "Whisk flour, sugar, baking soda, cinnamon, and salt separately, then fold into wet mix. Leave small lumps so pancakes stay fluffy." },
-          { short: "3. Griddle 2m per side", full: "Pour 1/4 cup scoops onto a buttered 375°F griddle. Flip when bubbles pop on top and edges look dry, about 2 minutes per side." }
-        ]
       }
     ];
 
     let storedRecipes = JSON.parse(localStorage.getItem('bananna_recipes'));
-    if (storedRecipes && !storedRecipes.some(r => r.id === 104)) {
-      storedRecipes.unshift(defaultRecipes[0]);
-      localStorage.setItem('bananna_recipes', JSON.stringify(storedRecipes));
+    if (storedRecipes) {
+      // Ensure existing saved cards have author and ratings fields
+      storedRecipes = storedRecipes.map(r => ({
+        ...r,
+        author: r.author || "Family",
+        ratings: r.ratings || { nana: 5, grantson: 5 }
+      }));
     }
     let recipes = storedRecipes || defaultRecipes;
 
@@ -636,7 +685,7 @@
           const res = await fetch(cloudEndpoint);
           const data = await res.json();
           if (Array.isArray(data) && data.length > 0) {
-            recipes = data;
+            recipes = data.map(r => ({ ...r, author: r.author || "Family", ratings: r.ratings || { nana: 5, grantson: 5 } }));
             localStorage.setItem('bananna_recipes', JSON.stringify(recipes));
           } else if (!data) {
             await saveToStorage();
@@ -666,7 +715,6 @@
     }
 
     function saveSettings() {
-      // Remove any accidental spaces or linebreaks added by phone keyboards
       const key = document.getElementById('geminiKeyInput').value.replace(/\s+/g, '');
       const cloud = document.getElementById('cloudUrlInput').value.trim();
       document.getElementById('geminiKeyInput').value = key;
@@ -674,6 +722,13 @@
       localStorage.setItem('bananna_cloud_url', cloud);
       closeModal('settingsModal');
       loadRecipes();
+    }
+
+    function clearSearchFilters() {
+      document.getElementById('searchInput').value = '';
+      document.getElementById('typeFilter').value = 'ALL';
+      document.getElementById('matchMode').value = 'ALL';
+      renderCards();
     }
 
     function renderCards() {
@@ -688,7 +743,7 @@
         if (typeFilter !== 'ALL' && r.type !== typeFilter) return false;
         if (searchTerms.length === 0) return true;
 
-        const searchableText = (r.title + ' ' + (r.ingredients || []).join(' ')).toLowerCase();
+        const searchableText = (r.title + ' ' + (r.author || '') + ' ' + (r.ingredients || []).join(' ')).toLowerCase();
         if (matchMode === 'ALL') {
           return searchTerms.every(term => searchableText.includes(term));
         } else {
@@ -702,12 +757,21 @@
             <div>
               <span class="type-tab">${r.type}</span>
               <h3 class="card-title">${r.title}</h3>
-              <div class="card-meta">${r.time}</div>
+              <div class="card-meta">Baker: <b>${r.author || 'Family'}</b> • ${r.time}</div>
             </div>
-            <div class="stars" title="Tap to rate this recipe">
-              ${[1,2,3,4,5].map(star => `
-                <span class="${star <= r.rating ? 'filled' : ''}" onclick="rateRecipe(${r.id},${star})">★</span>
-              `).join('')}
+            <div class="ratings-box">
+              <div class="rating-row">
+                <span class="rating-label">Nana:</span>
+                <div class="stars">
+                  ${[1,2,3,4,5].map(s => `<span class="${s <= (r.ratings?.nana || 0) ? 'filled' : ''}" onclick="rateRecipe(${r.id}, 'nana',${s})">★</span>`).join('')}
+                </div>
+              </div>
+              <div class="rating-row">
+                <span class="rating-label">Grantson:</span>
+                <div class="stars">
+                  ${[1,2,3,4,5].map(s => `<span class="${s <= (r.ratings?.grantson || 0) ? 'filled' : ''}" onclick="rateRecipe(${r.id}, 'grantson',${s})">★</span>`).join('')}
+                </div>
+              </div>
             </div>
           </div>
 
@@ -739,17 +803,21 @@
           </div>
 
           <div class="card-footer">
-            <span>From: ${r.source}</span>
-            <button class="delete-btn" onclick="deleteRecipe(${r.id})">Remove Card</button>
+            <span>Source: ${r.source}</span>
+            <div class="card-footer-actions">
+              <button class="action-link" onclick="openEditModal(${r.id})">✏️ Edit Card</button>
+              <button class="action-link delete-btn" onclick="deleteRecipe(${r.id})">Remove</button>
+            </div>
           </div>
         </article>
       `).join('');
     }
 
-    function rateRecipe(id, stars) {
+    function rateRecipe(id, person, stars) {
       const recipe = recipes.find(r => r.id === id);
       if (recipe) {
-        recipe.rating = stars;
+        if (!recipe.ratings) recipe.ratings = { nana: 5, grantson: 5 };
+        recipe.ratings[person] = stars;
         saveToStorage();
         renderCards();
       }
@@ -773,10 +841,46 @@
     function openModal(id) { document.getElementById(id).classList.add('active'); }
     function closeModal(id) { document.getElementById(id).classList.remove('active'); }
 
+    function openCreateModal() {
+      document.getElementById('modalHeaderTitle').textContent = "Write a New Index Card";
+      document.getElementById('editCardId').value = '';
+      document.getElementById('newTitle').value = '';
+      document.getElementById('newTime').value = '';
+      document.getElementById('newAuthor').value = 'Grantson';
+      document.getElementById('newIngredients').value = '';
+      document.getElementById('newSteps').value = '';
+      openModal('createModal');
+    }
+
+    function openEditModal(id) {
+      const r = recipes.find(item => item.id === id);
+      if (!r) return;
+      document.getElementById('modalHeaderTitle').textContent = "Edit Recipe Index Card";
+      document.getElementById('editCardId').value = r.id;
+      document.getElementById('newTitle').value = r.title;
+      document.getElementById('newType').value = r.type;
+      document.getElementById('newTime').value = r.time;
+      document.getElementById('newAuthor').value = r.author || 'Family';
+      document.getElementById('newIngredients').value = (r.ingredients || []).join('\n');
+      
+      const rawStepsCombined = (r.steps || []).map(s => {
+        const shortClean = s.short.replace(/^\d+\.\s*/, '');
+        return `${shortClean} | ${s.full}`;
+      }).join('\n');
+      document.getElementById('newSteps').value = rawStepsCombined;
+
+      openModal('createModal');
+    }
+
+    // Override the Write Card button to use openCreateModal
+    document.querySelector("button[onclick*=\"openModal('createModal')\"]").setAttribute("onclick", "openCreateModal()");
+
     function saveCustomRecipe() {
+      const editId = document.getElementById('editCardId').value;
       const title = document.getElementById('newTitle').value.trim() || "Untitled Recipe Card";
       const type = document.getElementById('newType').value;
       const time = document.getElementById('newTime').value.trim() || "30m total";
+      const author = document.getElementById('newAuthor').value.trim() || "Family";
       const ingredients = document.getElementById('newIngredients').value.split('\n').map(i => i.trim()).filter(Boolean);
       const rawSteps = document.getElementById('newSteps').value.split('\n').map(s => s.trim()).filter(Boolean);
 
@@ -788,27 +892,37 @@
         return { short: shortText, full: fullText };
       });
 
-      recipes.unshift({
-        id: Date.now(),
-        title,
-        type,
-        time,
-        rating: 5,
-        source: "Homemade Card",
-        ingredients: ingredients.length ? ingredients : ["Ingredients not listed"],
-        steps: steps.length ? steps : [{ short: "1. Combine & cook", full: "Follow standard preparation." }]
-      });
+      if (editId) {
+        // Editing existing card
+        const existing = recipes.find(r => r.id == editId);
+        if (existing) {
+          existing.title = title;
+          existing.type = type;
+          existing.time = time;
+          existing.author = author;
+          existing.ingredients = ingredients.length ? ingredients : ["Ingredients not listed"];
+          existing.steps = steps.length ? steps : [{ short: "1. Combine & cook", full: "Follow standard preparation." }];
+        }
+      } else {
+        // Creating new card
+        recipes.unshift({
+          id: Date.now(),
+          title,
+          type,
+          time,
+          author,
+          ratings: { nana: 5, grantson: 5 },
+          source: "Homemade Card",
+          ingredients: ingredients.length ? ingredients : ["Ingredients not listed"],
+          steps: steps.length ? steps : [{ short: "1. Combine & cook", full: "Follow standard preparation." }]
+        });
+      }
 
       saveToStorage();
       renderCards();
-      document.getElementById('newTitle').value = '';
-      document.getElementById('newTime').value = '';
-      document.getElementById('newIngredients').value = '';
-      document.getElementById('newSteps').value = '';
       closeModal('createModal');
     }
 
-    // 3-Tier Web Reader for URLs
     async function fetchRecipePageText(cleanUrl) {
       try {
         const res1 = await fetch(`https://r.jina.ai/${cleanUrl}`);
@@ -843,7 +957,6 @@
       throw new Error("SITE_BLOCKED");
     }
 
-    // Multi-Model Gemini Call + Markdown Stripper
     async function callGeminiRecipeParser(pageText, apiKey) {
       const prompt = `
         You are building a recipe card for "BaNanna Bread Box".
@@ -889,7 +1002,6 @@
           }
 
           let rawJson = aiData.candidates[0].content.parts[0].text.trim();
-          // Strip ```json ... ``` wrappers if present
           rawJson = rawJson.replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/```$/, '').trim();
           return JSON.parse(rawJson);
         } catch (err) {
@@ -899,7 +1011,6 @@
       throw new Error("AI_ERROR: " + lastError);
     }
 
-    // Built-In Offline Fallback Parser (Guarantees Box B always works even without AI)
     function offlineParseText(rawText) {
       const lines = rawText.split('\n').map(l => l.trim()).filter(Boolean);
       const title = lines[0] || "Clipped Recipe Card";
@@ -946,6 +1057,7 @@
     async function realUrlImport() {
       let url = document.getElementById('importUrlInput').value.trim();
       const rawTextPaste = document.getElementById('importRawTextInput').value.trim();
+      const authorInput = document.getElementById('importAuthorInput').value.trim() || "Web Clip";
       const apiKey = (localStorage.getItem('bananna_api_key') || '').replace(/\s+/g, '');
       const statusEl = document.getElementById('importStatus');
       const btn = document.getElementById('clipBtn');
@@ -963,9 +1075,8 @@
       try {
         btn.disabled = true;
         let pageText = "";
-        let sourceName = "Pasted Card";
+        let sourceName = "Web Clip";
 
-        // Step 1: Get text from Box B (priority) or Box A URL
         if (rawTextPaste) {
           statusEl.textContent = "1/2 Reading your pasted recipe text...";
           pageText = rawTextPaste;
@@ -978,7 +1089,6 @@
           pageText = await fetchRecipePageText(url);
         }
 
-        // Step 2: Condense into Index Card (Uses Gemini if key works, or Offline Parser if Box B text)
         statusEl.textContent = "2/2 Writing condensed index card...";
         let parsedRecipe = null;
 
@@ -988,7 +1098,6 @@
           } catch (aiErr) {
             console.warn("Gemini API fallback triggered:", aiErr);
             if (rawTextPaste) {
-              // If user pasted text in Box B, still build the card immediately!
               parsedRecipe = offlineParseText(rawTextPaste);
             } else {
               throw aiErr;
@@ -1008,7 +1117,8 @@
           title: parsedRecipe.title || "Clipped Recipe",
           type: parsedRecipe.type || "Mains & Meats",
           time: parsedRecipe.time || "See steps",
-          rating: 5,
+          author: authorInput,
+          ratings: { nana: 5, grantson: 5 },
           source: sourceName,
           ingredients: parsedRecipe.ingredients || [],
           steps: parsedRecipe.steps || []
@@ -1019,13 +1129,14 @@
         statusEl.textContent = "";
         document.getElementById('importUrlInput').value = "";
         document.getElementById('importRawTextInput').value = "";
+        document.getElementById('importAuthorInput').value = "";
         closeModal('urlModal');
       } catch (err) {
         console.error(err);
         if (err.message === "SITE_BLOCKED") {
-          statusEl.textContent = "That website blocked link reading! Copy the text from the recipe page and paste it into Box B above.";
+          statusEl.textContent = "That website blocked link reading! Copy text from the page and paste it into Box B above.";
         } else {
-          statusEl.textContent = "API Key issue (" + err.message.replace("AI_ERROR: ", "") + "). Check your key in ⚙️ Setup, or paste text into Box B!";
+          statusEl.textContent = "API Key issue. Check your key in ⚙️ Setup, or paste text directly into Box B!";
         }
       } finally {
         btn.disabled = false;
