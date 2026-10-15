@@ -39,7 +39,6 @@
       margin: 0 auto;
     }
 
-    /* Header & Controls */
     header {
       background: var(--wood-dark);
       color: var(--card-bg);
@@ -96,7 +95,6 @@
       font-size: 0.85rem;
     }
 
-    /* Search & Filter Bar */
     .filter-bar {
       background: #F4ECE1;
       border: 2px solid var(--wood-dark);
@@ -132,7 +130,6 @@
       background: var(--card-bg);
     }
 
-    /* Index Card Grid */
     .card-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(480px, 1fr));
@@ -143,7 +140,6 @@
       .card-grid { grid-template-columns: 1fr; }
     }
 
-    /* The Recipe Index Card */
     .index-card {
       background-color: var(--card-bg);
       background-image: repeating-linear-gradient(
@@ -198,7 +194,6 @@
       display: inline-block;
     }
 
-    /* Star Rating */
     .stars {
       display: inline-flex;
       gap: 2px;
@@ -209,7 +204,6 @@
     }
     .stars .filled { color: #D98A2B; }
 
-    /* Compact 2-Column Body inside Card */
     .card-body {
       display: grid;
       grid-template-columns: 38% 62%;
@@ -330,7 +324,6 @@
       text-decoration: underline;
     }
 
-    /* Modals */
     .modal-overlay {
       display: none;
       position: fixed;
@@ -422,20 +415,20 @@
 
   <main class="card-grid" id="cardGrid"></main>
 
-  <!-- 1. CLIP FROM WEBSITE MODAL (With 3-Tier Scraper & Paste Failsafe) -->
+  <!-- 1. CLIP FROM WEBSITE MODAL -->
   <div class="modal-overlay" id="urlModal">
     <div class="modal-card">
       <h2>Clip Recipe from Website</h2>
       <p style="font-size:0.84rem; margin-bottom:12px;">
-        Paste a recipe link in Box A. If a site blocks automatic clipping (like Food Network), just copy the messy text from the recipe page and paste it into Box B!
+        Paste a recipe link in Box A, OR copy & paste the recipe text directly into Box B!
       </p>
       <div class="form-row">
         <label>Option A: Recipe Website Link (URL)</label>
         <input type="url" id="importUrlInput" placeholder="https://www.allrecipes.com/recipe/...">
       </div>
       <div class="form-row">
-        <label>Option B: Or Paste Messy Webpage Text Directly (Works on 100% of sites)</label>
-        <textarea id="importRawTextInput" rows="4" placeholder="If a site blocks links, just Select All -> Copy on the recipe webpage and paste the whole messy text here. We'll clean it up!"></textarea>
+        <label>Option B: Or Paste Copied Recipe Text Directly (Always Works!)</label>
+        <textarea id="importRawTextInput" rows="5" placeholder="Copy the recipe title, ingredients, and directions from any webpage or note and paste them right here!"></textarea>
       </div>
       <div id="importStatus" style="font-size:0.85rem; color:var(--red-line); margin-bottom:10px; font-weight:bold;"></div>
       <div style="display:flex; justify-content:flex-end; gap:8px;">
@@ -496,7 +489,7 @@
       </p>
       <div class="form-row">
         <label>1. Free Gemini API Key (For "Clip Web Link")</label>
-        <input type="password" id="geminiKeyInput" placeholder="AIzaSy...">
+        <input type="text" id="geminiKeyInput" placeholder="AIzaSy...">
         <div class="helper-text">Get a free key at <b>aistudio.google.com</b> so the app can read & summarize recipe links.</div>
       </div>
       <div class="form-row">
@@ -619,7 +612,6 @@
     ];
 
     let storedRecipes = JSON.parse(localStorage.getItem('bananna_recipes'));
-    // Ensure new default lentil soup card shows up even if phone loaded older version
     if (storedRecipes && !storedRecipes.some(r => r.id === 104)) {
       storedRecipes.unshift(defaultRecipes[0]);
       localStorage.setItem('bananna_recipes', JSON.stringify(storedRecipes));
@@ -674,8 +666,10 @@
     }
 
     function saveSettings() {
-      const key = document.getElementById('geminiKeyInput').value.trim();
+      // Remove any accidental spaces or linebreaks added by phone keyboards
+      const key = document.getElementById('geminiKeyInput').value.replace(/\s+/g, '');
       const cloud = document.getElementById('cloudUrlInput').value.trim();
+      document.getElementById('geminiKeyInput').value = key;
       localStorage.setItem('bananna_api_key', key);
       localStorage.setItem('bananna_cloud_url', cloud);
       closeModal('settingsModal');
@@ -814,8 +808,8 @@
       closeModal('createModal');
     }
 
+    // 3-Tier Web Reader for URLs
     async function fetchRecipePageText(cleanUrl) {
-      // Tier 1: Jina Reader
       try {
         const res1 = await fetch(`https://r.jina.ai/${cleanUrl}`);
         if (res1.ok) {
@@ -826,7 +820,6 @@
         }
       } catch (e) {}
 
-      // Tier 2: AllOrigins Proxy
       try {
         const res2 = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(cleanUrl)}`);
         if (res2.ok) {
@@ -837,7 +830,6 @@
         }
       } catch (e) {}
 
-      // Tier 3: CodeTabs Proxy
       try {
         const res3 = await fetch(`https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(cleanUrl)}`);
         if (res3.ok) {
@@ -848,25 +840,118 @@
         }
       } catch (e) {}
 
-      throw new Error("Site firewall blocked automated readers.");
+      throw new Error("SITE_BLOCKED");
+    }
+
+    // Multi-Model Gemini Call + Markdown Stripper
+    async function callGeminiRecipeParser(pageText, apiKey) {
+      const prompt = `
+        You are building a recipe card for "BaNanna Bread Box".
+        Extract the recipe from the text below and return ONLY valid JSON matching this exact structure:
+        {
+          "title": "Recipe Name",
+          "type": "Choose ONE: Bread & Loaves, Mains & Meats, Soups & Stews, Breakfast, Sides & Veggies, Desserts & Sweets, Drinks & Syrups",
+          "time": "e.g., 15m prep • 45m bake • 350°F",
+          "ingredients": ["1 cup flour", "2 eggs"],
+          "steps": [
+            {
+              "short": "1. 4-to-6 word action summary with temp/time",
+              "full": "Clear, complete instruction without blog fluff."
+            }
+          ]
+        }
+
+        Recipe text:
+        ${pageText.slice(0, 22000)}
+      `;
+
+      const models = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash'];
+      let lastError = "Unknown API error";
+
+      for (const model of models) {
+        try {
+          const aiResponse = await fetch(
+            `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
+            {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                contents: [{ parts: [{ text: prompt }] }],
+                generationConfig: { responseMimeType: "application/json" }
+              })
+            }
+          );
+
+          const aiData = await aiResponse.json();
+          if (aiData.error) {
+            lastError = aiData.error.message;
+            continue;
+          }
+
+          let rawJson = aiData.candidates[0].content.parts[0].text.trim();
+          // Strip ```json ... ``` wrappers if present
+          rawJson = rawJson.replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/```$/, '').trim();
+          return JSON.parse(rawJson);
+        } catch (err) {
+          lastError = err.message;
+        }
+      }
+      throw new Error("AI_ERROR: " + lastError);
+    }
+
+    // Built-In Offline Fallback Parser (Guarantees Box B always works even without AI)
+    function offlineParseText(rawText) {
+      const lines = rawText.split('\n').map(l => l.trim()).filter(Boolean);
+      const title = lines[0] || "Clipped Recipe Card";
+      const ingredients = [];
+      const steps = [];
+      let mode = 'unknown';
+
+      const unitRegex = /^(\d+|\d+\/\d+|one|two|three|a\s+pinch|pinch|juice|kosher|salt|pepper|olive\s+oil)/i;
+
+      for (let i = 1; i < lines.length; i++) {
+        const line = lines[i];
+        const lower = line.toLowerCase();
+
+        if (lower === 'ingredients' || lower === 'ingredient list' || lower.startsWith('ingredients:')) {
+          mode = 'ing';
+          continue;
+        }
+        if (lower === 'directions' || lower === 'instructions' || lower === 'method' || lower === 'steps' || lower.startsWith('directions:')) {
+          mode = 'steps';
+          continue;
+        }
+
+        if (mode === 'ing' || (mode === 'unknown' && line.length < 65 && unitRegex.test(line))) {
+          ingredients.push(line.replace(/^[-•*]\s*/, ''));
+        } else if (line.length > 25) {
+          const cleanStep = line.replace(/^(step\s*\d+[:.]?|\d+[.)])\s*/i, '').trim();
+          const words = cleanStep.split(/\s+/).slice(0, 6).join(' ');
+          steps.push({
+            short: `${steps.length + 1}. ${words}...`,
+            full: cleanStep
+          });
+        }
+      }
+
+      return {
+        title,
+        type: "Mains & Meats",
+        time: "See steps below",
+        ingredients: ingredients.length ? ingredients : ["See full steps for measurements"],
+        steps: steps.length ? steps : [{ short: "1. Prepare recipe", full: rawText }]
+      };
     }
 
     async function realUrlImport() {
       let url = document.getElementById('importUrlInput').value.trim();
       const rawTextPaste = document.getElementById('importRawTextInput').value.trim();
-      const apiKey = (localStorage.getItem('bananna_api_key') || '').trim();
+      const apiKey = (localStorage.getItem('bananna_api_key') || '').replace(/\s+/g, '');
       const statusEl = document.getElementById('importStatus');
       const btn = document.getElementById('clipBtn');
 
       if (!url && !rawTextPaste) {
         statusEl.textContent = "Please paste a recipe link in Box A or paste recipe text in Box B.";
-        return;
-      }
-
-      if (!apiKey) {
-        closeModal('urlModal');
-        openModal('settingsModal');
-        alert("First-time setup: Paste your free Gemini API key in Setup so the app can read recipes!");
         return;
       }
 
@@ -878,8 +963,9 @@
       try {
         btn.disabled = true;
         let pageText = "";
-        let sourceName = "Web Clip";
+        let sourceName = "Pasted Card";
 
+        // Step 1: Get text from Box B (priority) or Box A URL
         if (rawTextPaste) {
           statusEl.textContent = "1/2 Reading your pasted recipe text...";
           pageText = rawTextPaste;
@@ -892,46 +978,30 @@
           pageText = await fetchRecipePageText(url);
         }
 
+        // Step 2: Condense into Index Card (Uses Gemini if key works, or Offline Parser if Box B text)
         statusEl.textContent = "2/2 Writing condensed index card...";
+        let parsedRecipe = null;
 
-        const prompt = `
-          You are building a recipe card for "BaNanna Bread Box".
-          Extract the recipe from the text below and return ONLY valid JSON matching this exact structure:
-          {
-            "title": "Recipe Name",
-            "type": "Choose ONE: Bread & Loaves, Mains & Meats, Soups & Stews, Breakfast, Sides & Veggies, Desserts & Sweets, Drinks & Syrups",
-            "time": "e.g., 15m prep • 45m bake • 350°F",
-            "ingredients": ["1 cup flour", "2 eggs"],
-            "steps": [
-              {
-                "short": "1. 4-to-6 word action summary with temp/time",
-                "full": "Clear, complete instruction without blog fluff."
-              }
-            ]
+        if (apiKey) {
+          try {
+            parsedRecipe = await callGeminiRecipeParser(pageText, apiKey);
+          } catch (aiErr) {
+            console.warn("Gemini API fallback triggered:", aiErr);
+            if (rawTextPaste) {
+              // If user pasted text in Box B, still build the card immediately!
+              parsedRecipe = offlineParseText(rawTextPaste);
+            } else {
+              throw aiErr;
+            }
           }
-
-          Recipe text:
-          ${pageText.slice(0, 25000)}
-        `;
-
-        const aiResponse = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
-          {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              contents: [{ parts: [{ text: prompt }] }],
-              generationConfig: { responseMimeType: "application/json" }
-            })
-          }
-        );
-
-        const aiData = await aiResponse.json();
-        if (!aiData.candidates || !aiData.candidates[0]) {
-          throw new Error(aiData.error ? aiData.error.message : "API key error");
+        } else if (rawTextPaste) {
+          parsedRecipe = offlineParseText(rawTextPaste);
+        } else {
+          closeModal('urlModal');
+          openModal('settingsModal');
+          alert("Please check your Gemini API Key in ⚙️ Setup, or paste the recipe text directly into Box B!");
+          return;
         }
-
-        const parsedRecipe = JSON.parse(aiData.candidates[0].content.parts[0].text);
 
         recipes.unshift({
           id: Date.now(),
@@ -952,7 +1022,11 @@
         closeModal('urlModal');
       } catch (err) {
         console.error(err);
-        statusEl.textContent = "That website blocked automatic reading! Just copy the text from the recipe page and paste it into Box B above—we'll format the card automatically.";
+        if (err.message === "SITE_BLOCKED") {
+          statusEl.textContent = "That website blocked link reading! Copy the text from the recipe page and paste it into Box B above.";
+        } else {
+          statusEl.textContent = "API Key issue (" + err.message.replace("AI_ERROR: ", "") + "). Check your key in ⚙️ Setup, or paste text into Box B!";
+        }
       } finally {
         btn.disabled = false;
       }
