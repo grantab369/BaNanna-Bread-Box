@@ -2,8 +2,16 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>BaNanna Bread Box</title>
+
+  <!-- Full-Screen Mobile App Mode & Custom Banana Icon -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Bread Box">
+  <meta name="mobile-web-app-capable" content="yes">
+  <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2220%22 fill=%22%235C4332%22/><text y=%22.88em%22 x=%2210%22 font-size=%2275%22>🍌</text></svg>">
+
   <link href="https://fonts.googleapis.com/css2?family=Courier+Prime:ital,wght@0,400;0,700;1,400&family=Fraunces:opsz,wght@9..144,600;9..144,800&display=swap" rel="stylesheet">
   <style>
     :root {
@@ -26,7 +34,7 @@
       background-size: 20px 20px;
       color: var(--ink);
       font-family: 'Courier Prime', monospace;
-      padding: 20px;
+      padding: 16px;
       max-width: 1200px;
       margin: 0 auto;
     }
@@ -35,39 +43,41 @@
     header {
       background: var(--wood-dark);
       color: var(--card-bg);
-      padding: 18px 24px;
+      padding: 16px 20px;
       border-radius: 10px;
       border-bottom: 5px solid #3D2B1F;
       display: flex;
       flex-wrap: wrap;
       justify-content: space-between;
       align-items: center;
-      gap: 15px;
-      margin-bottom: 20px;
+      gap: 12px;
+      margin-bottom: 18px;
       box-shadow: 0 4px 12px rgba(0,0,0,0.15);
     }
 
     .brand h1 {
       font-family: 'Fraunces', serif;
-      font-size: 2rem;
+      font-size: 1.85rem;
       color: #FCE8B2;
       letter-spacing: -0.5px;
     }
 
     .brand p {
-      font-size: 0.9rem;
+      font-size: 0.85rem;
       color: #D8C8B8;
     }
 
     .action-buttons {
       display: flex;
-      gap: 10px;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
     }
 
     .btn {
       font-family: 'Fraunces', serif;
-      font-size: 1rem;
-      padding: 10px 16px;
+      font-size: 0.95rem;
+      padding: 10px 14px;
       border-radius: 6px;
       border: 2px solid #3D2B1F;
       cursor: pointer;
@@ -78,14 +88,21 @@
     .btn:active { transform: translateY(2px); }
     .btn-primary { background: var(--accent-yellow); color: var(--ink); }
     .btn-secondary { background: var(--card-bg); color: var(--ink); }
+    .btn-icon {
+      background: #473325;
+      color: #D8C8B8;
+      border: 1px solid #6E523F;
+      padding: 8px 10px;
+      font-size: 0.85rem;
+    }
 
     /* Search & Filter Bar */
     .filter-bar {
       background: #F4ECE1;
       border: 2px solid var(--wood-dark);
       border-radius: 8px;
-      padding: 14px;
-      margin-bottom: 24px;
+      padding: 12px 14px;
+      margin-bottom: 20px;
       display: grid;
       grid-template-columns: 2fr 1fr auto;
       gap: 12px;
@@ -99,7 +116,7 @@
     .input-group label {
       display: block;
       font-weight: bold;
-      font-size: 0.82rem;
+      font-size: 0.8rem;
       text-transform: uppercase;
       margin-bottom: 4px;
       color: var(--wood-dark);
@@ -107,7 +124,7 @@
 
     .input-group input, .input-group select {
       width: 100%;
-      padding: 9px 12px;
+      padding: 9px 11px;
       font-family: 'Courier Prime', monospace;
       font-size: 0.95rem;
       border: 2px solid #B5A391;
@@ -118,8 +135,8 @@
     /* Index Card Grid */
     .card-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(500px, 1fr));
-      gap: 24px;
+      grid-template-columns: repeat(auto-fill, minmax(480px, 1fr));
+      gap: 20px;
     }
 
     @media (max-width: 600px) {
@@ -138,9 +155,9 @@
       border: 1px solid #C8B9A6;
       border-radius: 4px;
       box-shadow: 3px 5px 12px rgba(0,0,0,0.12), inset 0 0 25px rgba(215, 195, 165, 0.2);
-      padding: 16px 20px 18px;
+      padding: 15px 18px 16px;
       position: relative;
-      line-height: 1.25; /* Tight spacing for single-glance reading */
+      line-height: 1.25;
       font-size: 0.92rem;
     }
 
@@ -157,13 +174,14 @@
 
     .card-title {
       font-family: 'Fraunces', serif;
-      font-size: 1.35rem;
-      line-height: 1.1;
+      font-size: 1.3rem;
+      line-height: 1.15;
       color: var(--ink);
+      margin-top: 4px;
     }
 
     .card-meta {
-      font-size: 0.8rem;
+      font-size: 0.78rem;
       color: var(--ink-muted);
       margin-top: 3px;
     }
@@ -171,12 +189,13 @@
     .type-tab {
       background: var(--sage);
       color: #fff;
-      font-size: 0.72rem;
+      font-size: 0.7rem;
       text-transform: uppercase;
-      padding: 3px 8px;
+      padding: 2px 7px;
       border-radius: 3px;
       font-weight: bold;
       letter-spacing: 0.5px;
+      display: inline-block;
     }
 
     /* Star Rating */
@@ -184,7 +203,7 @@
       display: inline-flex;
       gap: 2px;
       cursor: pointer;
-      font-size: 1.15rem;
+      font-size: 1.2rem;
       color: #D0C5B8;
       user-select: none;
     }
@@ -199,14 +218,20 @@
 
     @media (max-width: 520px) {
       .card-body { grid-template-columns: 1fr; }
+      .ing-list {
+        border-right: none !important;
+        border-bottom: 1px dashed #D5C5B5;
+        padding-bottom: 8px;
+        margin-bottom: 4px;
+      }
     }
 
     .section-label {
       font-weight: bold;
       text-transform: uppercase;
-      font-size: 0.78rem;
+      font-size: 0.76rem;
       color: var(--red-line);
-      margin-bottom: 4px;
+      margin-bottom: 5px;
       display: flex;
       justify-content: space-between;
       align-items: center;
@@ -219,13 +244,20 @@
     }
 
     .ing-list li {
-      margin-bottom: 3px;
+      margin-bottom: 4px;
       letter-spacing: -0.3px;
+      cursor: pointer;
+    }
+
+    .ing-list li.checked {
+      text-decoration: line-through;
+      color: var(--ink-muted);
+      opacity: 0.65;
     }
 
     .steps-list {
       list-style: none;
-      padding-right: 6px;
+      padding-right: 4px;
     }
 
     .step-item {
@@ -257,8 +289,8 @@
       font-weight: normal;
       color: #4A3E35;
       font-size: 0.85rem;
-      margin-top: 2px;
-      padding-left: 12px;
+      margin-top: 3px;
+      padding-left: 10px;
       border-left: 2px solid var(--accent-yellow);
     }
 
@@ -284,13 +316,21 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      font-size: 0.75rem;
+      font-size: 0.74rem;
       color: var(--ink-muted);
     }
 
-    .card-footer a { color: var(--wood-dark); }
+    .delete-btn {
+      background: none;
+      border: none;
+      color: #B57C70;
+      cursor: pointer;
+      font-family: 'Courier Prime', monospace;
+      font-size: 0.74rem;
+      text-decoration: underline;
+    }
 
-    /* Modal Styles */
+    /* Modals */
     .modal-overlay {
       display: none;
       position: fixed;
@@ -298,7 +338,7 @@
       background: rgba(43, 36, 30, 0.65);
       align-items: center;
       justify-content: center;
-      padding: 20px;
+      padding: 16px;
       z-index: 100;
     }
 
@@ -326,10 +366,16 @@
     .form-row label { display: block; font-weight: bold; font-size: 0.85rem; margin-bottom: 4px; }
     .form-row input, .form-row textarea, .form-row select {
       width: 100%;
-      padding: 8px;
+      padding: 9px;
       font-family: 'Courier Prime', monospace;
       border: 1px solid #B5A391;
       border-radius: 4px;
+      font-size: 0.95rem;
+    }
+    .helper-text {
+      font-size: 0.76rem;
+      color: var(--ink-muted);
+      margin-top: 3px;
     }
   </style>
 </head>
@@ -338,17 +384,18 @@
   <header>
     <div class="brand">
       <h1>🍌 BaNanna Bread Box</h1>
-      <p>Grandma's counter-top recipe cards — no life stories, just good food.</p>
+      <p id="syncBadge">Grandma's counter-top recipe cards — tap any ingredient to check it off.</p>
     </div>
     <div class="action-buttons">
-      <button class="btn btn-secondary" onclick="openModal('urlModal')">🔗 Clip from Web Link</button>
-      <button class="btn btn-primary" onclick="openModal('createModal')">✍️ Write New Card</button>
+      <button class="btn btn-secondary" onclick="openModal('urlModal')">🔗 Clip Web Link</button>
+      <button class="btn btn-primary" onclick="openModal('createModal')">✍️ Write Card</button>
+      <button class="btn btn-icon" onclick="openModal('settingsModal')" title="Family Box Setup">⚙️ Setup</button>
     </div>
   </header>
 
   <section class="filter-bar">
     <div class="input-group">
-      <label>Search by Ingredients (comma-separated) or Title</label>
+      <label>Search Ingredients (comma-separated) or Recipe Name</label>
       <input type="text" id="searchInput" placeholder="e.g., banana, butter, walnuts..." oninput="renderCards()">
     </div>
     <div class="input-group">
@@ -358,6 +405,8 @@
         <option value="Bread & Loaves">Bread & Loaves</option>
         <option value="Mains & Meats">Mains & Meats</option>
         <option value="Breakfast">Breakfast</option>
+        <option value="Sides & Veggies">Sides & Veggies</option>
+        <option value="Desserts & Sweets">Desserts & Sweets</option>
         <option value="Drinks & Syrups">Drinks & Syrups</option>
       </select>
     </div>
@@ -372,23 +421,26 @@
 
   <main class="card-grid" id="cardGrid"></main>
 
-  <!-- URL Import Modal -->
+  <!-- 1. CLIP FROM WEBSITE MODAL -->
   <div class="modal-overlay" id="urlModal">
     <div class="modal-card">
       <h2>Clip Recipe from Website</h2>
-      <p style="font-size:0.85rem; margin-bottom:12px;">Paste any recipe link below. BaNanna Bread Box strips out the ads and condenses the steps onto an index card.</p>
+      <p style="font-size:0.85rem; margin-bottom:12px;">
+        Paste any recipe website link below. We'll skip the life story and write a clean index card.
+      </p>
       <div class="form-row">
-        <label>Recipe Website URL</label>
-        <input type="url" id="importUrlInput" placeholder="https://www.example-food-blog.com/best-banana-bread">
+        <label>Recipe Website Link (URL)</label>
+        <input type="url" id="importUrlInput" placeholder="https://www.allrecipes.com/recipe/...">
       </div>
+      <div id="importStatus" style="font-size:0.85rem; color:var(--red-line); margin-bottom:10px; font-weight:bold;"></div>
       <div style="display:flex; justify-content:flex-end; gap:8px;">
         <button class="btn btn-secondary" onclick="closeModal('urlModal')">Cancel</button>
-        <button class="btn btn-primary" onclick="simulateUrlImport()">Clip to Index Card</button>
+        <button class="btn btn-primary" id="clipBtn" onclick="realUrlImport()">Clip to Index Card</button>
       </div>
     </div>
   </div>
 
-  <!-- Write Your Own Recipe Modal -->
+  <!-- 2. WRITE YOUR OWN RECIPE MODAL -->
   <div class="modal-overlay" id="createModal">
     <div class="modal-card">
       <h2>Write a New Index Card</h2>
@@ -403,21 +455,24 @@
             <option value="Bread & Loaves">Bread & Loaves</option>
             <option value="Mains & Meats">Mains & Meats</option>
             <option value="Breakfast">Breakfast</option>
+            <option value="Sides & Veggies">Sides & Veggies</option>
+            <option value="Desserts & Sweets">Desserts & Sweets</option>
             <option value="Drinks & Syrups">Drinks & Syrups</option>
           </select>
         </div>
         <div>
           <label>Prep / Cook Time</label>
-          <input type="text" id="newTime" placeholder="10m prep | 55m bake">
+          <input type="text" id="newTime" placeholder="10m prep • 55m bake">
         </div>
       </div>
       <div class="form-row">
         <label>Ingredients (One per line)</label>
-        <textarea id="newIngredients" rows="4" placeholder="3 ripe bananas, mashed&#10;1/2 cup browned butter&#10;1/2 cup brown sugar&#10;2 cups flour"></textarea>
+        <textarea id="newIngredients" rows="4" placeholder="3 ripe bananas, mashed&#10;1/2 cup melted butter&#10;3/4 cup brown sugar&#10;1.5 cups flour"></textarea>
       </div>
       <div class="form-row">
-        <label>Steps (Format: Short Glance Summary | Full Detailed Instruction)</label>
-        <textarea id="newSteps" rows="4" placeholder="Mash bananas & butter | Mash 3 very ripe bananas in a bowl, then whisk in the warm browned butter until smooth.&#10;Fold dry ingredients | Gently fold in flour, baking soda, and salt until just combined. Do not overmix.&#10;Bake at 350°F (55m) | Pour into greased 9x5 loaf pan and bake until a toothpick comes out clean."></textarea>
+        <label>Steps (Short Summary | Full Detail — one step per line)</label>
+        <textarea id="newSteps" rows="4" placeholder="Mash bananas & butter | Mash 3 ripe bananas in a bowl, then stir in melted butter.&#10;Fold dry ingredients | Gently fold in flour, baking soda, and salt until just combined.&#10;Bake at 350°F (55m) | Pour into greased loaf pan and bake until toothpick comes out clean."></textarea>
+        <div class="helper-text">Tip: Use the "|" bar to separate the short glance title from the expandable details.</div>
       </div>
       <div style="display:flex; justify-content:flex-end; gap:8px;">
         <button class="btn btn-secondary" onclick="closeModal('createModal')">Cancel</button>
@@ -426,10 +481,34 @@
     </div>
   </div>
 
+  <!-- 3. ONE-TIME FAMILY SETUP MODAL (API Key & Optional Cloud Sync) -->
+  <div class="modal-overlay" id="settingsModal">
+    <div class="modal-card">
+      <h2>⚙️ One-Time Family Box Setup</h2>
+      <p style="font-size:0.84rem; margin-bottom:14px;">
+        Enter these once on your phone or your mother-in-law's phone. They stay saved privately inside the phone's memory.
+      </p>
+      <div class="form-row">
+        <label>1. Free Gemini API Key (For "Clip Web Link")</label>
+        <input type="password" id="geminiKeyInput" placeholder="AIzaSy...">
+        <div class="helper-text">Get a free key at <b>aistudio.google.com</b> so the app can read & summarize recipe links.</div>
+      </div>
+      <div class="form-row">
+        <label>2. Optional Shared Family Cloud Box URL (Firebase Realtime DB)</label>
+        <input type="url" id="cloudUrlInput" placeholder="https://your-family-box-default-rtdb.firebaseio.com">
+        <div class="helper-text">Leave blank to store cards only on this phone, OR paste a free Firebase Database URL so all phones share the exact same live recipe box!</div>
+      </div>
+      <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:16px;">
+        <button class="btn btn-secondary" onclick="closeModal('settingsModal')">Close</button>
+        <button class="btn btn-primary" onclick="saveSettings()">Save Settings</button>
+      </div>
+    </div>
+  </div>
+
   <script>
     const defaultRecipes = [
       {
-        id: 1,
+        id: 101,
         title: "Nana's Classic BaNanna Bread",
         type: "Bread & Loaves",
         time: "10m prep • 55m bake • 350°F",
@@ -455,12 +534,12 @@
         ]
       },
       {
-        id: 2,
+        id: 102,
         title: "Cast-Iron Pan-Seared NY Strip",
         type: "Mains & Meats",
         time: "5m prep • 10m cook • High Heat",
         rating: 5,
-        source: "Clipped from Web",
+        source: "Kitchen Tested",
         ingredients: [
           "1 lb NY Strip steak (1.5\" thick)",
           "1 tbsp coarse kosher salt",
@@ -478,11 +557,11 @@
         ]
       },
       {
-        id: 3,
+        id: 103,
         title: "Cinnamon Sourdough Discard Pancakes",
         type: "Breakfast",
         time: "10m prep • 12m cook",
-        rating: 4,
+        rating: 5,
         source: "Handwritten Card",
         ingredients: [
           "1 cup sourdough discard",
@@ -505,8 +584,61 @@
 
     let recipes = JSON.parse(localStorage.getItem('bananna_recipes')) || defaultRecipes;
 
-    function saveToStorage() {
+    // Load saved settings into modal inputs
+    document.getElementById('geminiKeyInput').value = localStorage.getItem('bananna_api_key') || '';
+    document.getElementById('cloudUrlInput').value = localStorage.getItem('bananna_cloud_url') || '';
+
+    function getCleanCloudUrl() {
+      let url = (localStorage.getItem('bananna_cloud_url') || '').trim();
+      if (!url) return '';
+      if (url.endsWith('/')) url = url.slice(0, -1);
+      return `${url}/recipes.json`;
+    }
+
+    async function loadRecipes() {
+      const cloudEndpoint = getCleanCloudUrl();
+      if (cloudEndpoint) {
+        try {
+          const res = await fetch(cloudEndpoint);
+          const data = await res.json();
+          if (Array.isArray(data) && data.length > 0) {
+            recipes = data;
+            localStorage.setItem('bananna_recipes', JSON.stringify(recipes));
+          } else if (!data) {
+            // Seed cloud database with initial recipes if empty
+            await saveToStorage();
+          }
+          document.getElementById('syncBadge').textContent = "🟢 Connected to Shared Family Box — tap any ingredient to check it off.";
+        } catch (e) {
+          console.warn("Cloud sync offline, using phone memory.", e);
+        }
+      }
+      renderCards();
+    }
+
+    async function saveToStorage() {
       localStorage.setItem('bananna_recipes', JSON.stringify(recipes));
+      const cloudEndpoint = getCleanCloudUrl();
+      if (cloudEndpoint) {
+        try {
+          await fetch(cloudEndpoint, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(recipes)
+          });
+        } catch (e) {
+          console.error("Could not sync to cloud:", e);
+        }
+      }
+    }
+
+    function saveSettings() {
+      const key = document.getElementById('geminiKeyInput').value.trim();
+      const cloud = document.getElementById('cloudUrlInput').value.trim();
+      localStorage.setItem('bananna_api_key', key);
+      localStorage.setItem('bananna_cloud_url', cloud);
+      closeModal('settingsModal');
+      loadRecipes();
     }
 
     function renderCards() {
@@ -521,7 +653,7 @@
         if (typeFilter !== 'ALL' && r.type !== typeFilter) return false;
         if (searchTerms.length === 0) return true;
 
-        const searchableText = (r.title + ' ' + r.ingredients.join(' ')).toLowerCase();
+        const searchableText = (r.title + ' ' + (r.ingredients || []).join(' ')).toLowerCase();
         if (matchMode === 'ALL') {
           return searchTerms.every(term => searchableText.includes(term));
         } else {
@@ -537,7 +669,7 @@
               <h3 class="card-title">${r.title}</h3>
               <div class="card-meta">${r.time}</div>
             </div>
-            <div class="stars" title="Click to rate this recipe">
+            <div class="stars" title="Tap to rate this recipe">
               ${[1,2,3,4,5].map(star => `
                 <span class="${star <= r.rating ? 'filled' : ''}" onclick="rateRecipe(${r.id},${star})">★</span>
               `).join('')}
@@ -548,17 +680,17 @@
             <div>
               <div class="section-label">Ingredients</div>
               <ul class="ing-list">
-                ${r.ingredients.map(ing => `<li>• ${ing}</li>`).join('')}
+                ${(r.ingredients || []).map(ing => `<li onclick="this.classList.toggle('checked')">• ${ing}</li>`).join('')}
               </ul>
             </div>
 
             <div>
               <div class="section-label">
-                <span>Quick Steps (Tap to Expand)</span>
-                <button class="expand-all-btn" onclick="toggleAllSteps(${r.id})">Show Full Details</button>
+                <span>Quick Steps (Tap [+] for detail)</span>
+                <button class="expand-all-btn" onclick="toggleAllSteps(${r.id})">Expand All</button>
               </div>
               <ul class="steps-list">
-                ${r.steps.map((s, idx) => `
+                ${(r.steps || []).map(s => `
                   <li class="step-item" onclick="this.classList.toggle('expanded')">
                     <div class="step-short">
                       <span>${s.short}</span>
@@ -572,8 +704,8 @@
           </div>
 
           <div class="card-footer">
-            <span>Source: ${r.source}</span>
-            <span>Tap any step to read full method</span>
+            <span>From: ${r.source}</span>
+            <button class="delete-btn" onclick="deleteRecipe(${r.id})">Remove Card</button>
           </div>
         </article>
       `).join('');
@@ -583,6 +715,14 @@
       const recipe = recipes.find(r => r.id === id);
       if (recipe) {
         recipe.rating = stars;
+        saveToStorage();
+        renderCards();
+      }
+    }
+
+    function deleteRecipe(id) {
+      if (confirm("Remove this index card from the box?")) {
+        recipes = recipes.filter(r => r.id !== id);
         saveToStorage();
         renderCards();
       }
@@ -607,8 +747,9 @@
 
       const steps = rawSteps.map((line, i) => {
         const parts = line.split('|');
-        const shortText = parts[0] ? `${i+1}. ${parts[0].trim()}` : `${i+1}. Step ${i+1}`;
-        const fullText = parts[1] ? parts[1].trim() : parts[0].trim();
+        const cleanShort = parts[0].replace(/^\d+\.\s*/, '').trim();
+        const shortText = `${i+1}. ${cleanShort}`;
+        const fullText = parts[1] ? parts[1].trim() : cleanShort;
         return { short: shortText, full: fullText };
       });
 
@@ -625,36 +766,100 @@
 
       saveToStorage();
       renderCards();
+      document.getElementById('newTitle').value = '';
+      document.getElementById('newTime').value = '';
+      document.getElementById('newIngredients').value = '';
+      document.getElementById('newSteps').value = '';
       closeModal('createModal');
     }
 
-    function simulateUrlImport() {
-      const url = document.getElementById('importUrlInput').value.trim() || "https://recipe-blog.com/cold-brew-liqueur";
-      recipes.unshift({
-        id: Date.now(),
-        title: "Homemade Cold Brew Coffee Liqueur",
-        type: "Drinks & Syrups",
-        time: "15m prep • 24h steep",
-        rating: 5,
-        source: new URL(url.startsWith('http') ? url : 'https://' + url).hostname,
-        ingredients: [
-          "1.5 cups strong cold brew concentrate",
-          "1.5 cups dark rum or bourbon",
-          "1 cup demerara simple syrup",
-          "1 whole vanilla bean, split"
-        ],
-        steps: [
-          { short: "1. Simmer demerara syrup", full: "Dissolve 1 cup demerara sugar in 1 cup water over medium heat until clear. Cool completely." },
-          { short: "2. Whisk cold brew & spirit", full: "Combine the cooled syrup, cold brew concentrate, and rum in a clean glass mason jar." },
-          { short: "3. Infuse vanilla 24 hrs", full: "Drop in the split vanilla bean, seal tightly, and store in a cool dark pantry for at least 24 hours before straining." }
-        ]
-      });
-      saveToStorage();
-      renderCards();
-      closeModal('urlModal');
+    async function realUrlImport() {
+      const url = document.getElementById('importUrlInput').value.trim();
+      const apiKey = (localStorage.getItem('bananna_api_key') || '').trim();
+      const statusEl = document.getElementById('importStatus');
+      const btn = document.getElementById('clipBtn');
+
+      if (!url) {
+        statusEl.textContent = "Please paste a recipe website link first.";
+        return;
+      }
+
+      if (!apiKey) {
+        closeModal('urlModal');
+        openModal('settingsModal');
+        alert("First-time setup: Paste your free Gemini API key in Setup so the app can read recipe links!");
+        return;
+      }
+
+      try {
+        btn.disabled = true;
+        statusEl.textContent = "1/2 Reading recipe from website...";
+
+        const pageResponse = await fetch(`https://r.jina.ai/${url}`);
+        const pageText = await pageResponse.text();
+
+        statusEl.textContent = "2/2 Writing condensed index card...";
+
+        const prompt = `
+          You are building a recipe card for "BaNanna Bread Box".
+          Extract the recipe from the webpage text below and return ONLY valid JSON matching this exact structure:
+          {
+            "title": "Recipe Name",
+            "type": "Choose ONE: Bread & Loaves, Mains & Meats, Breakfast, Sides & Veggies, Desserts & Sweets, Drinks & Syrups",
+            "time": "e.g., 15m prep • 45m bake • 350°F",
+            "ingredients": ["1 cup flour", "2 eggs"],
+            "steps": [
+              {
+                "short": "1. 4-to-6 word action summary with temp/time",
+                "full": "Clear, complete instruction without blog fluff."
+              }
+            ]
+          }
+
+          Webpage text:
+          ${pageText.slice(0, 18000)}
+        `;
+
+        const aiResponse = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              contents: [{ parts: [{ text: prompt }] }],
+              generationConfig: { responseMimeType: "application/json" }
+            })
+          }
+        );
+
+        const aiData = await aiResponse.json();
+        const parsedRecipe = JSON.parse(aiData.candidates[0].content.parts[0].text);
+
+        recipes.unshift({
+          id: Date.now(),
+          title: parsedRecipe.title,
+          type: parsedRecipe.type || "Mains & Meats",
+          time: parsedRecipe.time || "See steps",
+          rating: 5,
+          source: new URL(url).hostname.replace('www.', ''),
+          ingredients: parsedRecipe.ingredients,
+          steps: parsedRecipe.steps
+        });
+
+        await saveToStorage();
+        renderCards();
+        statusEl.textContent = "";
+        document.getElementById('importUrlInput').value = "";
+        closeModal('urlModal');
+      } catch (err) {
+        console.error(err);
+        statusEl.textContent = "Couldn't read that link automatically. Check your API Key in ⚙️ Setup or try another recipe link.";
+      } finally {
+        btn.disabled = false;
+      }
     }
 
-    renderCards();
+    loadRecipes();
   </script>
 </body>
 </html>
