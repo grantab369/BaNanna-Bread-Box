@@ -396,7 +396,7 @@
   <section class="filter-bar">
     <div class="input-group">
       <label>Search Ingredients (comma-separated) or Recipe Name</label>
-      <input type="text" id="searchInput" placeholder="e.g., banana, butter, walnuts..." oninput="renderCards()">
+      <input type="text" id="searchInput" placeholder="e.g., lentils, banana, butter, walnuts..." oninput="renderCards()">
     </div>
     <div class="input-group">
       <label>Recipe Box Divider (Type)</label>
@@ -404,6 +404,7 @@
         <option value="ALL">All Recipe Cards</option>
         <option value="Bread & Loaves">Bread & Loaves</option>
         <option value="Mains & Meats">Mains & Meats</option>
+        <option value="Soups & Stews">Soups & Stews</option>
         <option value="Breakfast">Breakfast</option>
         <option value="Sides & Veggies">Sides & Veggies</option>
         <option value="Desserts & Sweets">Desserts & Sweets</option>
@@ -421,16 +422,20 @@
 
   <main class="card-grid" id="cardGrid"></main>
 
-  <!-- 1. CLIP FROM WEBSITE MODAL -->
+  <!-- 1. CLIP FROM WEBSITE MODAL (With 3-Tier Scraper & Paste Failsafe) -->
   <div class="modal-overlay" id="urlModal">
     <div class="modal-card">
       <h2>Clip Recipe from Website</h2>
-      <p style="font-size:0.85rem; margin-bottom:12px;">
-        Paste any recipe website link below. We'll skip the life story and write a clean index card.
+      <p style="font-size:0.84rem; margin-bottom:12px;">
+        Paste a recipe link in Box A. If a site blocks automatic clipping (like Food Network), just copy the messy text from the recipe page and paste it into Box B!
       </p>
       <div class="form-row">
-        <label>Recipe Website Link (URL)</label>
+        <label>Option A: Recipe Website Link (URL)</label>
         <input type="url" id="importUrlInput" placeholder="https://www.allrecipes.com/recipe/...">
+      </div>
+      <div class="form-row">
+        <label>Option B: Or Paste Messy Webpage Text Directly (Works on 100% of sites)</label>
+        <textarea id="importRawTextInput" rows="4" placeholder="If a site blocks links, just Select All -> Copy on the recipe webpage and paste the whole messy text here. We'll clean it up!"></textarea>
       </div>
       <div id="importStatus" style="font-size:0.85rem; color:var(--red-line); margin-bottom:10px; font-weight:bold;"></div>
       <div style="display:flex; justify-content:flex-end; gap:8px;">
@@ -454,6 +459,7 @@
           <select id="newType">
             <option value="Bread & Loaves">Bread & Loaves</option>
             <option value="Mains & Meats">Mains & Meats</option>
+            <option value="Soups & Stews">Soups & Stews</option>
             <option value="Breakfast">Breakfast</option>
             <option value="Sides & Veggies">Sides & Veggies</option>
             <option value="Desserts & Sweets">Desserts & Sweets</option>
@@ -481,7 +487,7 @@
     </div>
   </div>
 
-  <!-- 3. ONE-TIME FAMILY SETUP MODAL (API Key & Optional Cloud Sync) -->
+  <!-- 3. ONE-TIME FAMILY SETUP MODAL -->
   <div class="modal-overlay" id="settingsModal">
     <div class="modal-card">
       <h2>⚙️ One-Time Family Box Setup</h2>
@@ -507,6 +513,36 @@
 
   <script>
     const defaultRecipes = [
+      {
+        id: 104,
+        title: "Slow Cooker Mediterranean Lentil Soup",
+        type: "Soups & Stews",
+        time: "20m prep • 6-8h slow cook",
+        rating: 5,
+        source: "foodnetwork.com (Jeff Mauro)",
+        ingredients: [
+          "1 lb dried brown or green lentils, rinsed",
+          "6 cups chicken or vegetable stock",
+          "1 (14.5 oz) can fire-roasted diced tomatoes",
+          "1 large yellow onion, diced",
+          "3 carrots, peeled and diced",
+          "3 stalks celery, diced",
+          "4 cloves garlic, minced",
+          "2 tsp ground cumin",
+          "1 tsp smoked paprika",
+          "1/2 tsp dried oregano",
+          "2 bay leaves",
+          "3 cups baby spinach or kale",
+          "Juice of 1 fresh lemon",
+          "Extra-virgin olive oil & crumbled feta"
+        ],
+        steps: [
+          { short: "1. Load base into slow cooker", full: "Combine rinsed lentils, stock, diced tomatoes, onion, carrots, celery, garlic, cumin, smoked paprika, oregano, and bay leaves in a 6-quart slow cooker." },
+          { short: "2. Cook Low 7-8h (or High 4h)", full: "Cover and cook on LOW for 7 to 8 hours (or HIGH for 4 to 5 hours) until the lentils and vegetables are completely tender." },
+          { short: "3. Wilt greens & add lemon", full: "Discard bay leaves. Stir in the fresh spinach and lemon juice during the last 5 minutes until greens are wilted. Season generously with salt and black pepper." },
+          { short: "4. Top with olive oil & feta", full: "Ladle hot soup into bowls and finish with a drizzle of good olive oil and crumbled feta cheese." }
+        ]
+      },
       {
         id: 101,
         title: "Nana's Classic BaNanna Bread",
@@ -582,15 +618,21 @@
       }
     ];
 
-    let recipes = JSON.parse(localStorage.getItem('bananna_recipes')) || defaultRecipes;
+    let storedRecipes = JSON.parse(localStorage.getItem('bananna_recipes'));
+    // Ensure new default lentil soup card shows up even if phone loaded older version
+    if (storedRecipes && !storedRecipes.some(r => r.id === 104)) {
+      storedRecipes.unshift(defaultRecipes[0]);
+      localStorage.setItem('bananna_recipes', JSON.stringify(storedRecipes));
+    }
+    let recipes = storedRecipes || defaultRecipes;
 
-    // Load saved settings into modal inputs
     document.getElementById('geminiKeyInput').value = localStorage.getItem('bananna_api_key') || '';
     document.getElementById('cloudUrlInput').value = localStorage.getItem('bananna_cloud_url') || '';
 
     function getCleanCloudUrl() {
       let url = (localStorage.getItem('bananna_cloud_url') || '').trim();
       if (!url) return '';
+      url = url.replace(/^Https:\/\//i, 'https://').replace(/^Http:\/\//i, 'http://');
       if (url.endsWith('/')) url = url.slice(0, -1);
       return `${url}/recipes.json`;
     }
@@ -605,7 +647,6 @@
             recipes = data;
             localStorage.setItem('bananna_recipes', JSON.stringify(recipes));
           } else if (!data) {
-            // Seed cloud database with initial recipes if empty
             await saveToStorage();
           }
           document.getElementById('syncBadge').textContent = "🟢 Connected to Shared Family Box — tap any ingredient to check it off.";
@@ -773,39 +814,92 @@
       closeModal('createModal');
     }
 
+    async function fetchRecipePageText(cleanUrl) {
+      // Tier 1: Jina Reader
+      try {
+        const res1 = await fetch(`https://r.jina.ai/${cleanUrl}`);
+        if (res1.ok) {
+          const text1 = await res1.text();
+          if (text1 && text1.length > 400 && !text1.includes("Access Denied") && !text1.includes("403 Forbidden")) {
+            return text1;
+          }
+        }
+      } catch (e) {}
+
+      // Tier 2: AllOrigins Proxy
+      try {
+        const res2 = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(cleanUrl)}`);
+        if (res2.ok) {
+          const data2 = await res2.json();
+          if (data2.contents && data2.contents.length > 400 && !data2.contents.includes("Access Denied")) {
+            return data2.contents.replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '').replace(/<[^>]+>/g, ' ');
+          }
+        }
+      } catch (e) {}
+
+      // Tier 3: CodeTabs Proxy
+      try {
+        const res3 = await fetch(`https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(cleanUrl)}`);
+        if (res3.ok) {
+          const text3 = await res3.text();
+          if (text3 && text3.length > 400 && !text3.includes("Access Denied")) {
+            return text3.replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '').replace(/<[^>]+>/g, ' ');
+          }
+        }
+      } catch (e) {}
+
+      throw new Error("Site firewall blocked automated readers.");
+    }
+
     async function realUrlImport() {
-      const url = document.getElementById('importUrlInput').value.trim();
+      let url = document.getElementById('importUrlInput').value.trim();
+      const rawTextPaste = document.getElementById('importRawTextInput').value.trim();
       const apiKey = (localStorage.getItem('bananna_api_key') || '').trim();
       const statusEl = document.getElementById('importStatus');
       const btn = document.getElementById('clipBtn');
 
-      if (!url) {
-        statusEl.textContent = "Please paste a recipe website link first.";
+      if (!url && !rawTextPaste) {
+        statusEl.textContent = "Please paste a recipe link in Box A or paste recipe text in Box B.";
         return;
       }
 
       if (!apiKey) {
         closeModal('urlModal');
         openModal('settingsModal');
-        alert("First-time setup: Paste your free Gemini API key in Setup so the app can read recipe links!");
+        alert("First-time setup: Paste your free Gemini API key in Setup so the app can read recipes!");
         return;
+      }
+
+      if (url) {
+        url = url.replace(/^Https:\/\//i, 'https://').replace(/^Http:\/\//i, 'http://');
+        if (!url.startsWith('http')) url = 'https://' + url;
       }
 
       try {
         btn.disabled = true;
-        statusEl.textContent = "1/2 Reading recipe from website...";
+        let pageText = "";
+        let sourceName = "Web Clip";
 
-        const pageResponse = await fetch(`https://r.jina.ai/${url}`);
-        const pageText = await pageResponse.text();
+        if (rawTextPaste) {
+          statusEl.textContent = "1/2 Reading your pasted recipe text...";
+          pageText = rawTextPaste;
+          if (url) {
+            try { sourceName = new URL(url).hostname.replace('www.', ''); } catch(e) {}
+          }
+        } else {
+          statusEl.textContent = "1/2 Pulling recipe from website...";
+          sourceName = new URL(url).hostname.replace('www.', '');
+          pageText = await fetchRecipePageText(url);
+        }
 
         statusEl.textContent = "2/2 Writing condensed index card...";
 
         const prompt = `
           You are building a recipe card for "BaNanna Bread Box".
-          Extract the recipe from the webpage text below and return ONLY valid JSON matching this exact structure:
+          Extract the recipe from the text below and return ONLY valid JSON matching this exact structure:
           {
             "title": "Recipe Name",
-            "type": "Choose ONE: Bread & Loaves, Mains & Meats, Breakfast, Sides & Veggies, Desserts & Sweets, Drinks & Syrups",
+            "type": "Choose ONE: Bread & Loaves, Mains & Meats, Soups & Stews, Breakfast, Sides & Veggies, Desserts & Sweets, Drinks & Syrups",
             "time": "e.g., 15m prep • 45m bake • 350°F",
             "ingredients": ["1 cup flour", "2 eggs"],
             "steps": [
@@ -816,8 +910,8 @@
             ]
           }
 
-          Webpage text:
-          ${pageText.slice(0, 18000)}
+          Recipe text:
+          ${pageText.slice(0, 25000)}
         `;
 
         const aiResponse = await fetch(
@@ -833,27 +927,32 @@
         );
 
         const aiData = await aiResponse.json();
+        if (!aiData.candidates || !aiData.candidates[0]) {
+          throw new Error(aiData.error ? aiData.error.message : "API key error");
+        }
+
         const parsedRecipe = JSON.parse(aiData.candidates[0].content.parts[0].text);
 
         recipes.unshift({
           id: Date.now(),
-          title: parsedRecipe.title,
+          title: parsedRecipe.title || "Clipped Recipe",
           type: parsedRecipe.type || "Mains & Meats",
           time: parsedRecipe.time || "See steps",
           rating: 5,
-          source: new URL(url).hostname.replace('www.', ''),
-          ingredients: parsedRecipe.ingredients,
-          steps: parsedRecipe.steps
+          source: sourceName,
+          ingredients: parsedRecipe.ingredients || [],
+          steps: parsedRecipe.steps || []
         });
 
         await saveToStorage();
         renderCards();
         statusEl.textContent = "";
         document.getElementById('importUrlInput').value = "";
+        document.getElementById('importRawTextInput').value = "";
         closeModal('urlModal');
       } catch (err) {
         console.error(err);
-        statusEl.textContent = "Couldn't read that link automatically. Check your API Key in ⚙️ Setup or try another recipe link.";
+        statusEl.textContent = "That website blocked automatic reading! Just copy the text from the recipe page and paste it into Box B above—we'll format the card automatically.";
       } finally {
         btn.disabled = false;
       }
